@@ -64,6 +64,8 @@ endif ()
 # NWTC Library
 #-------------------------------------------------------------------------------
 
+add_subdirectory(src/NetLib/specfun)
+
 set(NWTCLIBS_SOURCES
 
   src/NWTC_Base.f90
@@ -123,7 +125,7 @@ set(NWTCLIBS_SOURCES
 
   # NetLib SPECFUN sources
   src/NetLib/specfun/NWTC_SPECFUN.f90
-  src/NetLib/specfun/rkbesl.f
+  $<TARGET_OBJECTS:netlib_specfun_rkbesl>
 )
 
 get_filename_component(FCNAME ${CMAKE_Fortran_COMPILER} NAME)
@@ -167,6 +169,7 @@ add_library(nwtclibs STATIC
   ${NWTC_SYS_FILE} 
   ${NWTCLIBS_SOURCES}
 )
+
 add_dependencies(nwtclibs nwtc_library_inc_subs)
 target_link_libraries(nwtclibs PUBLIC
   ${LAPACK_LIBRARIES} 
