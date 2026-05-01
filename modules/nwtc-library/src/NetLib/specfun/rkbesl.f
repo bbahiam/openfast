@@ -1,3 +1,15 @@
+! These definitions should match what is in SingPrec.f90
+! For double precision, CD needs to be replaced by two spaces
+! For single precision, CS needs to be replaced by two spaces
+! This is a trick to make the precompiler do it.
+#define S__
+#ifdef OPENFAST_DOUBLE_PRECISION
+   #define IMPLICIT_STATEMENT IMPLICIT INTEGER(4) (I-N), REAL(8) (A-H, O-Z)
+   #define CD S__  S__
+#else
+   #define IMPLICIT_STATEMENT IMPLICIT INTEGER(4) (I-N), REAL(4) (A-H, O-Z)
+   #define CS S__  S__
+#endif
       SUBROUTINE RKBESL(X,ALPHA,NB,IZE,BK,NCALC)
 C-------------------------------------------------------------------
 C

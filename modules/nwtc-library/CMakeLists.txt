@@ -120,6 +120,10 @@ set(NWTCLIBS_SOURCES
   src/NetLib/slatec/j4save.f
   src/NetLib/slatec/xgetua.f
   src/NetLib/slatec/xermsg.f  
+
+  # NetLib SPECFUN sources
+  src/NetLib/specfun/NWTC_SPECFUN.f90
+  src/NetLib/specfun/rkbesl.f
 )
 
 get_filename_component(FCNAME ${CMAKE_Fortran_COMPILER} NAME)
