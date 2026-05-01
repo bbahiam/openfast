@@ -51,6 +51,31 @@ MODULE NWTC_SPECFUN
 
 CONTAINS
 
+   !User friendly interface for RKBESL
+   FUNCTION BesselK(NU, X, ErrStat, ErrMsg)
+      REAL(ReKi)                  :: BesselK  ! Result
+      REAL(ReKi),     INTENT(IN)  :: NU ! Fractional order
+      REAL(ReKi),     INTENT(IN)  :: X  ! Argument
+      INTEGER(IntKi), INTENT(OUT) :: ErrStat
+      CHARACTER(*),   INTENT(OUT) :: ErrMsg
+
+      ! Internal variables
+      REAL(ReKi), DIMENSION(1) :: K ! return value of RKBESL
+      INTEGER(IntKi) :: NCALC ! Number of successful calculations in RKBESL
+
+      CALL RKBESL(X, NU , 1, 1, K, NCALC)
+      IF (NCALC < -1) THEN
+         ! Out of range, return value should be zero
+         k(1) = 0.0_ReKi
+      ELSEIF (NCALC /= 1) THEN
+         ! Calculation failed
+         CALL SetErrStat(NCALC, "Error calling RKBESL", ErrStat, ErrMsg, 'BesselA')
+      END IF
+
+      BesselK = K(1)
+
+   END FUNCTION BesselK
+
    ! Computes x^nu*besselk(nu, x), taking care to work for small values of x
    ! Should achieve machine precision. Based on the first terms of the 
    ! McLaurin series expansion of the bessel K function
@@ -62,10 +87,9 @@ CONTAINS
       CHARACTER(*),   INTENT(OUT) :: ErrMsg
       
       ! Internal variables
-      REAL(ReKi), DIMENSION(1) :: K ! return value of RKBESL
       REAL(ReKi) :: A0 ! First term of the expansion branch that is multiplied by 1
       REAL(ReKi) :: B0 ! First term of the expansion branch that is multiplied by x**(2*nu) 
-      INTEGER(IntKi) :: NCALC ! Number of successful calculations in RKBESL
+      REAL(ReKi) :: K  ! BesselK(NU, X)
       
       A0 = GAMMA(NU) * 2.0_ReKi**(NU-1.0_ReKi)  ! Limit when x->0
       IF (ABS(NU) <= 0.75_ReKi) THEN ! Safe to compute GAMMA(-NU)
@@ -81,17 +105,8 @@ CONTAINS
          END IF
       END IF
       
-      ! If we got here, then it is safe to compute the function in the usual way
-      CALL RKBESL(X, NU , 1, 1, K, NCALC)
-      IF (NCALC < -1) THEN
-         ! Out of range, return value should be zero
-         k(1) = 0.0_ReKi
-      ELSEIF (NCALC /= 1) THEN
-         ! Calculation failed
-         CALL SetErrStat(NCALC, "Error calling RKBESL", ErrStat, ErrMsg, 'BesselA')
-      END IF
-      
-      BesselA = X**NU * K(1)
+      K = BesselK(NU, X, ErrStat, ErrMsg)
+      BesselA = X**NU * K
       
    END FUNCTION BesselA
 
