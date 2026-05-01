@@ -92,14 +92,14 @@ CONTAINS
       REAL(ReKi) :: K  ! BesselK(NU, X)
       
       A0 = GAMMA(NU) * 2.0_ReKi**(NU-1.0_ReKi)  ! Limit when x->0
-      IF (ABS(NU) <= 0.75_ReKi) THEN ! Safe to compute GAMMA(-NU)
+      IF (ABS(NU) <= 0.5_ReKi) THEN ! Safe to compute GAMMA(-NU)
          IF (X*X <= SPACING(A0)/ABS(A0)) THEN  ! This approximation has error O(x^2)
             B0 = GAMMA(-NU) * 2.0_ReKi**(-NU-1.0_ReKi)
             BesselA = A0 + x**(2.0_ReKi*NU) * B0
             RETURN
          END IF
       ELSE
-         IF (ABS(X) <= SPACING(A0)/ABS(A0)) THEN ! This approximation has error (O(x^(2*nu)+O(x^2) < O(x^1.5))
+         IF (ABS(X) <= SPACING(A0)/ABS(A0)) THEN ! This approximation has error (O(x^(2*nu)+O(x^2) < O(x))
             BesselA = A0
             RETURN
          END IF
