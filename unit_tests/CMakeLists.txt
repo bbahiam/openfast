@@ -74,6 +74,17 @@ target_link_libraries(nwtc_library_utest nwtclibs testdrivelib)
 
 add_test(NAME nwtc_library_utest COMMAND nwtc_library_utest)
 
+# NWTC/NetLib/Specfun tests (in Fortran77, that come with the library)
+get_property(_specfun_tests GLOBAL PROPERTY NETLIB_SPECFUN_TEST_TARGETS)
+foreach(testname IN LISTS _specfun_tests)
+  add_test(NAME netlib_specfun_${testname} COMMAND ${testname})
+  set_tests_properties(netlib_specfun_${testname} PROPERTIES LABELS "netlib_specfun")
+endforeach()
+add_custom_target(ctest_netlib_specfun
+  COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -L netlib_specfun
+  DEPENDS ${_specfun_tests}
+)
+
 # Version Info Unit Tests
 add_executable(versioninfo_utest 
   ${PROJECT_SOURCE_DIR}/modules/version/tests/versioninfo_utest.F90
