@@ -26,6 +26,7 @@ MODULE TSSubs
    use TS_VelocitySpectra
    USE NWTC_FFTPACK
    USE NWTC_LAPACK
+   USE NWTC_SPECFUN, ONLY: BesselA
 
 
    IMPLICIT NONE
@@ -195,13 +196,17 @@ LOGICAL,    PARAMETER        :: COH_OUT = .FALSE.                       ! This p
 REAL(ReKi), ALLOCATABLE       :: Dist(:)        ! The distance between points
 REAL(ReKi), ALLOCATABLE       :: DistU(:)
 REAL(ReKi), ALLOCATABLE       :: DistZMExp(:)
+REAL(ReKi), ALLOCATABLE       :: Lvk(:)         ! von Karman length scale for each point
    
 REAL(ReKi)                    :: dY             ! the lateral distance between two points
 REAL(ReKi)                    :: UM             ! The mean wind speed of the two points
 REAL(ReKi)                    :: ZM             ! The mean height of the two points
+REAL(ReKi)                    :: eta_u          ! \eta_u from Wind Energy Hanbook eq 2.39
+REAL(ReKi)                    :: TRH_SCALE      ! Factor to scale coherence
 
 INTEGER                       :: J
 INTEGER                       :: I
+INTEGER                       :: K
 INTEGER                       :: IFreq
 INTEGER                       :: Indx
 INTEGER                       :: IVec  ! wind component, 1=u, 2=v, 3=w
@@ -223,6 +228,7 @@ CHARACTER(MaxMsgLen)          :: ErrMsg2
    CALL AllocAry( Dist,      p%grid%NPacked,      'Dist coherence array', ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_General')
    CALL AllocAry( DistU,     p%grid%NPacked,     'DistU coherence array', ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_General')
    CALL AllocAry( DistZMExp, p%grid%NPacked, 'DistZMExp coherence array', ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_General')
+   CALL AllocAry( Lvk,       p%grid%NPacked,       'Lvk coherence array', ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_General')
    IF (ErrStat >= AbortErrLev) THEN
       CALL Cleanup()
       RETURN
@@ -287,6 +293,27 @@ CHARACTER(MaxMsgLen)          :: ErrMsg2
          DistU(Indx) = Dist(Indx)/UM
       END DO ! I  
    END DO ! J 
+
+   ! Compute the von karman length scale for each point, based on its height
+   Indx=0
+   DO J=1,p%grid%NPoints
+      DO I=J,p%grid%NPoints  ! The coherence matrix is symmetric so we're going to skip the other side      
+         Indx = Indx + 1
+         ZM = 0.5*( p%grid%Z(I) + p%grid%Z(J) ) ! Mean height between the two points
+         IF ( ZM <= p%met%USR_Z(1) ) THEN
+            Lvk(Indx) = p%met%USR_L(1)   ! Extrapolation: nearest neighbor for heights below minimum height specified
+         ELSEIF ( ZM >= p%met%USR_Z(p%met%NumUSRz) ) THEN
+            Lvk(Indx) = p%met%USR_L(p%met%NumUSRz)  ! Extrapolation: nearest neighbor for heights above maximum height specified
+         ELSE !Interpolation: linear between user-defined height/integral scale curves
+            DO K=2,p%met%NumUSRz
+               IF ( ZM <= p%met%USR_Z(K) ) THEN
+                  Lvk(Indx) = (ZM - p%met%USR_Z(K-1)) * ( p%met%USR_L(K-1) - p%met%USR_L(K) ) / ( p%met%USR_Z(K-1) - p%met%USR_Z(K) ) + p%met%USR_L(K-1)
+                  EXIT
+               ENDIF
+            ENDDO
+         ENDIF
+      ENDDO
+   ENDDO
    
    !.................
    ! DEBUGGING
@@ -345,13 +372,22 @@ ENDIF
       
          END DO !J
          
+         ! scaling for coherence, approximatelly 0.994
+         TRH_SCALE = 1.0_ReKi/BesselA(5.0_ReKi/6.0_ReKi, 0.0_ReKi, ErrStat, ErrMsg)
+         
          DO J=max(1, p%usr%NPoints),p%grid%NPoints
             DO I=J,p%grid%NPoints
 
-                  TRH(Indx) = EXP( p%met%InCDec(IVec) * DistZMExp(Indx)* &
-                              SQRT( (p%grid%Freq(IFreq)*DistU(Indx) )**2 + (p%met%InCohB(IVec)*Dist(Indx))**2 ) )
+               ! Eq. 2.39 from Wind Energy Handbook
+               eta_u = SQRT((0.747_ReKi*Dist(Indx)/Lvk(Indx))**2 &
+                            + (TwoPi*p%grid%Freq(IFreq)*DistU(Indx))**2)
                
-                  Indx = Indx  + 1
+               ! Eq. 2.38 from Wind Energy Handbook
+               TRH(Indx) = TRH_SCALE * ( &
+                   BesselA(5.0_ReKi/6.0_ReKi, eta_u, ErrStat, ErrMsg) &
+                   - 0.5_ReKi*eta_u**(5.0_ReKi/3.0_ReKi)*BesselA(1.0_ReKi/6.0_ReKi, eta_u, ErrStat, ErrMsg))
+
+               Indx = Indx + 1
 
             ENDDO ! I
          ENDDO ! J

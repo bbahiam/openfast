@@ -195,11 +195,12 @@ CALL CalcTargetPSD(p, S, U, ErrStat, ErrMsg)
 CALL CheckError(ErrStat, ErrMsg)
 
    ! we don't need these arrays any more, so deallocate to save some space
-IF ( ALLOCATED( p%met%USR_Z         ) )  DEALLOCATE( p%met%USR_Z           )
 IF ( ALLOCATED( p%met%USR_U         ) )  DEALLOCATE( p%met%USR_U           )
 IF ( ALLOCATED( p%met%USR_WindDir   ) )  DEALLOCATE( p%met%USR_WindDir     )
 IF ( ALLOCATED( p%met%USR_Sigma     ) )  DEALLOCATE( p%met%USR_Sigma       )
-IF ( ALLOCATED( p%met%USR_L         ) )  DEALLOCATE( p%met%USR_L           )
+! These two are still needed for the von Karman coherence model
+!IF ( ALLOCATED( p%met%USR_Z         ) )  DEALLOCATE( p%met%USR_Z           )
+!IF ( ALLOCATED( p%met%USR_L         ) )  DEALLOCATE( p%met%USR_L           )
 
 IF ( ALLOCATED( p%met%ZL_profile    ) )  DEALLOCATE( p%met%ZL_profile      )
 IF ( ALLOCATED( p%met%Ustar_profile ) )  DEALLOCATE( p%met%Ustar_profile   )
