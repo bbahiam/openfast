@@ -122,6 +122,21 @@ set(NWTCLIBS_SOURCES
   src/NetLib/slatec/j4save.f
   src/NetLib/slatec/xgetua.f
   src/NetLib/slatec/xermsg.f  
+  # These are for bessel K function. Maybe need the double versions too?
+  src/NetLib/slatec/asyik.f
+  src/NetLib/slatec/besi0.f
+  src/NetLib/slatec/besi0e.f
+  src/NetLib/slatec/besi1.f
+  src/NetLib/slatec/besi1e.f
+  src/NetLib/slatec/besk.f
+  src/NetLib/slatec/besk0.f
+  src/NetLib/slatec/besk0e.f
+  src/NetLib/slatec/besk1.f
+  src/NetLib/slatec/besk1e.f
+  src/NetLib/slatec/besknu.f
+  src/NetLib/slatec/csevl.f
+  src/NetLib/slatec/inits.f
+
 
   # NetLib SPECFUN sources
   src/NetLib/specfun/NWTC_SPECFUN.f90
