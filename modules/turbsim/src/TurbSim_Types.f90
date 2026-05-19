@@ -34,6 +34,7 @@ use NWTC_Library
    INTEGER(IntKi), PARAMETER :: CohMod_GENERAL    = 1   ! General spatial coherence model using parameters input from file
    INTEGER(IntKi), PARAMETER :: CohMod_IEC        = 2   ! Spatial coherence specified by IEC standard
    INTEGER(IntKi), PARAMETER :: CohMod_API        = 3   ! Spatial coherence specified by API standard
+   INTEGER(IntKi), PARAMETER :: CohMod_VK         = 4   ! Spatial coherence model implicit in the von Karman turbulence model
    
    
       ! IEC turbulence types (IEC_WindType) 

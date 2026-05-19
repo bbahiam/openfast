@@ -894,10 +894,13 @@ CALL DefaultMetBndryCndtns(p)     ! Requires turbModel (some require RICH_NO, wh
                CASE ("API")
                   p%met%SCMOD(I) = CohMod_API
                   IF (I /= 1) CALL SetErrStat( ErrID_Fatal, "API coherence model is valid only for the u-component", ErrStat, ErrMsg, RoutineName)
+               CASE ("VK")
+                  p%met%SCMOD(I) = CohMod_VK
+                  IF (I /= 1) CALL SetErrStat( ErrID_Fatal, "VK coherence model is implemented only for the u-component", ErrStat, ErrMsg, RoutineName)
                CASE DEFAULT
                   p%met%SCMod(I) = CohMod_NONE
                   IF (I==1) THEN
-                     CALL SetErrStat( ErrID_Fatal, 'Unknown value for SCMod'//TRIM(Num2LStr(I))//'. Valid entries are "GENERAL","IEC","API", or "NONE".', ErrStat, ErrMsg, RoutineName)
+                     CALL SetErrStat( ErrID_Fatal, 'Unknown value for SCMod'//TRIM(Num2LStr(I))//'. Valid entries are "GENERAL","IEC","API", "VK, or "NONE".', ErrStat, ErrMsg, RoutineName)
                   ELSE               
                      CALL SetErrStat( ErrID_Fatal, 'Unknown value for SCMod'//TRIM(Num2LStr(I))//'. Valid entries are "GENERAL","IEC", or "NONE".', ErrStat, ErrMsg, RoutineName)
                   END IF 
@@ -3917,6 +3920,8 @@ WRITE (p%US,"( // 'Spatial Coherence Models:' / )")
             TmpStr = "NONE"
          CASE (CohMod_API)
             TmpStr = "API"
+         CASE (CohMod_VK)
+            TmpStr = "VK"
       END SELECT
       WRITE (p%US,'(   A10 , 2X , A, "-component coherence model" )' )  TRIM(TmpStr), Comp(i)
    end do

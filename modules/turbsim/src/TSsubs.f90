@@ -174,9 +174,9 @@ END SUBROUTINE CalcFourierCoeffs_IEC
 !=======================================================================
 !> This subroutine returns the complex Fourier coefficients (packed in a
 !! real array) of the simulated velocity (wind/water speed). It returns
-!! values FOR ONLY the velocity components that use the general method for
-!! computing spatial coherence; i.e., for i where SCMod(i) == CohMod_GENERAL
-SUBROUTINE CalcFourierCoeffs_General( p, U, PhaseAngles, S, V, TRH, ErrStat, ErrMsg )
+!! values FOR ONLY the velocity components that use the von Karman method for
+!! computing spatial coherence; i.e., for i where SCMod(i) == CohMod_VK
+SUBROUTINE CalcFourierCoeffs_VK( p, U, PhaseAngles, S, V, TRH, ErrStat, ErrMsg )
 
 TYPE(TurbSim_ParameterType), INTENT(IN   )  :: p                            !< TurbSim parameters
 REAL(ReKi),                  INTENT(IN)     :: U           (:)              !< The steady u-component wind speeds for the grid (NPoints).
@@ -219,16 +219,16 @@ CHARACTER(MaxMsgLen)          :: ErrMsg2
    ErrStat = ErrID_None
    ErrMsg  = ""
    
-   IF (.NOT. ANY(p%met%SCMod == CohMod_GENERAL) ) RETURN
+   IF (.NOT. ANY(p%met%SCMod == CohMod_VK) ) RETURN
 
    
    !--------------------------------------------------------------------------------
    ! allocate arrays
    !--------------------------------------------------------------------------------
-   CALL AllocAry( Dist,      p%grid%NPacked,      'Dist coherence array', ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_General')
-   CALL AllocAry( DistU,     p%grid%NPacked,     'DistU coherence array', ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_General')
-   CALL AllocAry( DistZMExp, p%grid%NPacked, 'DistZMExp coherence array', ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_General')
-   CALL AllocAry( Lvk,       p%grid%NPacked,       'Lvk coherence array', ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_General')
+   CALL AllocAry( Dist,      p%grid%NPacked,      'Dist coherence array', ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_VK')
+   CALL AllocAry( DistU,     p%grid%NPacked,     'DistU coherence array', ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_VK')
+   CALL AllocAry( DistZMExp, p%grid%NPacked, 'DistZMExp coherence array', ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_VK')
+   CALL AllocAry( Lvk,       p%grid%NPacked,       'Lvk coherence array', ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_VK')
    IF (ErrStat >= AbortErrLev) THEN
       CALL Cleanup()
       RETURN
@@ -321,10 +321,10 @@ CHARACTER(MaxMsgLen)          :: ErrMsg2
 IF ( COH_OUT ) THEN !debugging info...
 
       ! Write the coherence for three frequencies, for debugging purposes
-      CALL GetNewUnit( UC, ErrStat2, ErrMsg2 );  CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_General')
+      CALL GetNewUnit( UC, ErrStat2, ErrMsg2 );  CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_VK')
       
       CALL OpenFOutFile( UC, TRIM(p%RootName)//'.coh', ErrStat2, ErrMsg2 )
-         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_General')
+         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_VK')
          IF (ErrStat >= AbortErrLev) THEN
             CALL Cleanup()
             RETURN
@@ -344,7 +344,7 @@ ENDIF
    
    DO IVec = 1,3
    
-      IF (p%met%SCMod(IVec) /= CohMod_GENERAL) CYCLE ! Check the next component (this one doesn't use the GENERAL method)
+      IF (p%met%SCMod(IVec) /= CohMod_VK) CYCLE ! Check the next component (this one doesn't use the VK method)
    
       V(:,:,IVec) = 0.0_ReKi
 
@@ -406,7 +406,7 @@ ENDIF
          ! -----------------------------------------------
          
          CALL Coh2H(    p, IVec, IFreq, TRH, S, ErrStat2, ErrMsg2 )       
-            CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_General')
+            CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs_VK')
             IF (ErrStat >= AbortErrLev) THEN
                CALL Cleanup()
                RETURN
@@ -429,7 +429,7 @@ CONTAINS
       IF ( ALLOCATED( DistZMExp ) ) DEALLOCATE( DistZMExp )
    END SUBROUTINE Cleanup
 !............................................   
-END SUBROUTINE CalcFourierCoeffs_General
+END SUBROUTINE CalcFourierCoeffs_VK
 !=======================================================================
 !> This subroutine returns the complex Fourier coefficients (packed in a
 !! real array) of the simulated velocity (wind/water speed).
@@ -528,7 +528,7 @@ CHARACTER(MaxMsgLen)                        :: ErrMsg2
 
    CALL CalcFourierCoeffs_IEC(     p, U, PhaseAngles, S, V, TRH, ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs')   
    CALL CalcFourierCoeffs_API(     p, U, PhaseAngles, S, V, TRH, ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs')   
-   CALL CalcFourierCoeffs_General( p, U, PhaseAngles, S, V, TRH, ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs')   
+   CALL CalcFourierCoeffs_VK( p, U, PhaseAngles, S, V, TRH, ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs')   
    CALL CalcFourierCoeffs_NONE(    p, U, PhaseAngles, S, V, TRH, ErrStat2, ErrMsg2 ); CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, 'CalcFourierCoeffs')   
       
    CALL Cleanup()
