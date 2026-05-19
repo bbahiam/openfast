@@ -44,7 +44,7 @@ MODULE NWTC_SPECFUN
          REAL(ReKi),     INTENT(IN)  :: ALPHA
          INTEGER(IntKi), INTENT(IN)  :: NB
          INTEGER(IntKi), INTENT(IN)  :: IZE
-         REAL(ReKi),     INTENT(OUT), DIMENSION(1) :: BK
+         REAL(ReKi),     INTENT(OUT), DIMENSION(NB) :: BK
          INTEGER(IntKi), INTENT(OUT) :: NCALC
       END SUBROUTINE RKBESL
    END INTERFACE
@@ -60,19 +60,19 @@ CONTAINS
       CHARACTER(*),   INTENT(OUT) :: ErrMsg
 
       ! Internal variables
-      REAL(ReKi), DIMENSION(1) :: K ! return value of RKBESL
+      REAL(ReKi), DIMENSION(INT(NU)+1) :: K ! return value of RKBESL
       INTEGER(IntKi) :: NCALC ! Number of successful calculations in RKBESL
 
-      CALL RKBESL(X, NU , 1, 1, K, NCALC)
+      CALL RKBESL(X, NU-FLOOR(NU), INT(NU)+1, 1, K, NCALC)
       IF (NCALC < -1) THEN
          ! Out of range, return value should be zero
          k(1) = 0.0_ReKi
-      ELSEIF (NCALC /= 1) THEN
+      ELSEIF (NCALC /= INT(NU)+1) THEN
          ! Calculation failed
-         CALL SetErrStat(NCALC, "Error calling RKBESL", ErrStat, ErrMsg, 'BesselA')
+         CALL SetErrStat(NCALC, "Error calling RKBESL, perhaps NU is too big", ErrStat, ErrMsg, 'BesselA')
       END IF
 
-      BesselK = K(1)
+      BesselK = K(INT(NU)+1)
 
    END FUNCTION BesselK
 
